@@ -5,11 +5,23 @@ cd "$(dirname "$0")"
 PIDFILE=".server.pid"
 LOGFILE="server.log"
 
+build() {
+  if [ ! -d "node_modules" ]; then
+    echo "Installing dependencies..."
+    npm install --omit=dev
+  fi
+  if [ ! -d "dist" ] || [ "$(find src -newer dist -print -quit)" ]; then
+    echo "Building..."
+    npm run build
+  fi
+}
+
 start() {
   if [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
     echo "Already running (pid $(cat "$PIDFILE"))"
     return 1
   fi
+  build
   echo "Starting etherpad-mcp..."
   nohup node dist/index.js >> "$LOGFILE" 2>&1 &
   echo $! > "$PIDFILE"
