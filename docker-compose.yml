@@ -12,6 +12,7 @@ services:
       API_KEY: abracadabra-abracadabra
       MCP_API_KEY: c6f8f3e907b10653efc68ba8bd39779dec1976514f8ca00ff0aec60e117262c8
       ETHERPAD_PUBLIC_URL: http://192.168.1.3:8208
+      AUTHOR_NAME: Claude
       DB_TYPE: dirty
       DB_FILENAME: var/dirty.db
       DEFAULT_PAD_TEXT: " "

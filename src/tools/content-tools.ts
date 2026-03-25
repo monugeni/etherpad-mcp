@@ -2,7 +2,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { EtherpadClient } from "../etherpad-client.js";
 
-export function registerContentTools(server: McpServer, client: EtherpadClient, publicUrl: string) {
+export function registerContentTools(server: McpServer, client: EtherpadClient, publicUrl: string, authorId: string) {
   const padUrl = (padId: string) => `${publicUrl}/p/${padId}`;
   server.tool(
     "get_text",
@@ -47,7 +47,7 @@ export function registerContentTools(server: McpServer, client: EtherpadClient, 
         };
       }
       const updated = current.text.substring(0, idx) + new_text + current.text.substring(idx + old_text.length);
-      await client.setText(padId, updated);
+      await client.setText(padId, updated, authorId);
       const revs = await client.getRevisionsCount(padId);
       return { content: [{ type: "text", text: `Edit applied to pad "${padId}". Now at revision ${revs.revisions}.` }] };
     }
@@ -62,7 +62,7 @@ export function registerContentTools(server: McpServer, client: EtherpadClient, 
     },
     { readOnlyHint: false, destructiveHint: false, idempotentHint: true },
     async ({ padId, text }) => {
-      await client.setText(padId, text);
+      await client.setText(padId, text, authorId);
       const revs = await client.getRevisionsCount(padId);
       return { content: [{ type: "text", text: `Pad "${padId}" updated. Now at revision ${revs.revisions}.` }] };
     }
@@ -77,7 +77,7 @@ export function registerContentTools(server: McpServer, client: EtherpadClient, 
     },
     { readOnlyHint: false, destructiveHint: false },
     async ({ padId, text }) => {
-      await client.appendText(padId, text);
+      await client.appendText(padId, text, authorId);
       const revs = await client.getRevisionsCount(padId);
       return { content: [{ type: "text", text: `Text appended to pad "${padId}". Now at revision ${revs.revisions}.` }] };
     }

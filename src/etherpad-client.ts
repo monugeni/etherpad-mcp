@@ -62,12 +62,19 @@ export class EtherpadClient {
     return this.call("getText", { padID: padId });
   }
 
-  async setText(padId: string, text: string): Promise<void> {
-    await this.call("setText", { padID: padId, text });
+  async createAuthorIfNotExistsFor(
+    authorMapper: string,
+    name: string
+  ): Promise<{ authorID: string }> {
+    return this.call("createAuthorIfNotExistsFor", { authorMapper, name });
   }
 
-  async appendText(padId: string, text: string): Promise<void> {
-    await this.call("appendText", { padID: padId, text });
+  async setText(padId: string, text: string, authorId?: string): Promise<void> {
+    await this.call("setText", { padID: padId, text, ...(authorId ? { authorId } : {}) });
+  }
+
+  async appendText(padId: string, text: string, authorId?: string): Promise<void> {
+    await this.call("appendText", { padID: padId, text, ...(authorId ? { authorId } : {}) });
   }
 
   async getRevisionsCount(padId: string): Promise<{ revisions: number }> {

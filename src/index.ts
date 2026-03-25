@@ -25,6 +25,11 @@ for (let attempt = 1; ; attempt++) {
   }
 }
 
+// Register author
+const author = await client.createAuthorIfNotExistsFor("mcp-server", config.authorName);
+const authorId = author.authorID;
+console.error(`Registered as author "${config.authorName}" (${authorId})`);
+
 // Parse CLI args for transport override
 const transportArg = process.argv.includes("--stdio")
   ? "stdio"
@@ -33,7 +38,7 @@ const transportArg = process.argv.includes("--stdio")
     : config.transport;
 
 if (transportArg === "stdio") {
-  const server = createServer(client, config.etherpadPublicUrl);
+  const server = createServer(client, config.etherpadPublicUrl, authorId);
   const transport = new StdioServerTransport();
   await server.connect(transport);
   console.error("Etherpad MCP server running on stdio");
@@ -74,7 +79,7 @@ if (transportArg === "stdio") {
       },
     });
 
-    const server = createServer(client, config.etherpadPublicUrl);
+    const server = createServer(client, config.etherpadPublicUrl, authorId);
 
     transport.onclose = () => {
       const id = transport.sessionId;

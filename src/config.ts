@@ -4,6 +4,7 @@ export interface Config {
   etherpadApiKey: string;
   port: number;
   host: string;
+  authorName: string;
   mcpApiKey?: string;
   transport: "http" | "stdio";
 }
@@ -37,6 +38,7 @@ export async function loadConfig(): Promise<Config> {
     etherpadUrl: etherpadUrl.replace(/\/+$/, ""),
     etherpadPublicUrl,
     etherpadApiKey,
+    authorName: process.env.AUTHOR_NAME || "Claude",
     port: parseInt(process.env.PORT || "8209", 10),
     host: process.env.HOST || "0.0.0.0",
     mcpApiKey: process.env.MCP_API_KEY || undefined,
