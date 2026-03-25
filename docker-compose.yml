@@ -1,0 +1,24 @@
+services:
+  etherpad:
+    build: .
+    restart: always
+    environment:
+      NODE_ENV: production
+      SUPPRESS_ERRORS_IN_PAD_TEXT: "true"
+      TITLE: Esteem Etherpad
+      ADMIN_USER: admin
+      ADMIN_PASSWORD: etherpad-Admin
+      API_KEY: abracadabra-abracadabra
+      MCP_API_KEY: c6f8f3e907b10653efc68ba8bd39779dec1976514f8ca00ff0aec60e117262c8
+      DB_TYPE: dirty
+      DB_FILENAME: var/dirty.db
+      DEFAULT_PAD_TEXT: " "
+      TRUST_PROXY: "true"
+    ports:
+      - "8208:9001"
+      - "8209:8209"
+    volumes:
+      - etherpad-var:/opt/etherpad-lite/var
+
+volumes:
+  etherpad-var:
