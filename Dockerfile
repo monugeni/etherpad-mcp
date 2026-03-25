@@ -7,10 +7,10 @@ RUN apk add --no-cache supervisor
 # Copy and build MCP server
 WORKDIR /opt/mcp
 COPY package.json package-lock.json ./
-RUN npm install --omit=dev
+RUN npm install
 COPY tsconfig.json ./
 COPY src/ src/
-RUN npm run build
+RUN npm run build && rm -rf node_modules && npm install --omit=dev
 
 # Supervisor config to run both processes
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
