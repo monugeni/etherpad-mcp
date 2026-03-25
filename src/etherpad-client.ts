@@ -7,7 +7,7 @@ export interface EtherpadResponse<T = unknown> {
 export class EtherpadClient {
   private baseUrl: string;
   private apiKey: string;
-  private apiVersion = "1.2.15";
+  private apiVersion = "1.3.0";
 
   constructor(baseUrl: string, apiKey: string) {
     this.baseUrl = baseUrl.replace(/\/+$/, "");

@@ -8,6 +8,7 @@ services:
       TITLE: Esteem Etherpad
       ADMIN_USER: admin
       ADMIN_PASSWORD: etherpad-Admin
+      AUTHENTICATION_METHOD: apikey
       API_KEY: abracadabra-abracadabra
       MCP_API_KEY: c6f8f3e907b10653efc68ba8bd39779dec1976514f8ca00ff0aec60e117262c8
       DB_TYPE: dirty
