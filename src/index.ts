@@ -25,11 +25,6 @@ for (let attempt = 1; ; attempt++) {
   }
 }
 
-// Register author
-const author = await client.createAuthorIfNotExistsFor("mcp-server", config.authorName);
-const authorId = author.authorID;
-console.error(`Registered as author "${config.authorName}" (${authorId})`);
-
 // Parse CLI args for transport override
 const transportArg = process.argv.includes("--stdio")
   ? "stdio"
@@ -38,7 +33,10 @@ const transportArg = process.argv.includes("--stdio")
     : config.transport;
 
 if (transportArg === "stdio") {
-  const server = createServer(client, config.etherpadPublicUrl, authorId);
+  const authorName = config.authorName;
+  const author = await client.createAuthorIfNotExistsFor(`mcp-${authorName}`, authorName);
+  console.error(`Registered as author "${authorName}" (${author.authorID})`);
+  const server = createServer(client, config.etherpadPublicUrl, author.authorID);
   const transport = new StdioServerTransport();
   await server.connect(transport);
   console.error("Etherpad MCP server running on stdio");
@@ -70,6 +68,11 @@ if (transportArg === "stdio") {
       return;
     }
 
+    // Get author name from X-Author-Name header, fall back to config
+    const authorName = (req.headers["x-author-name"] as string) || config.authorName;
+    const author = await client.createAuthorIfNotExistsFor(`mcp-${authorName}`, authorName);
+    console.error(`New session for author "${authorName}" (${author.authorID})`);
+
     // New session — create transport with sessionIdGenerator
     const transport = new StreamableHTTPServerTransport({
       sessionIdGenerator: () => randomUUID(),
@@ -79,7 +82,7 @@ if (transportArg === "stdio") {
       },
     });
 
-    const server = createServer(client, config.etherpadPublicUrl, authorId);
+    const server = createServer(client, config.etherpadPublicUrl, author.authorID);
 
     transport.onclose = () => {
       const id = transport.sessionId;

@@ -4,7 +4,7 @@ export interface Config {
   etherpadApiKey: string;
   port: number;
   host: string;
-  authorName: string;
+  authorName: string; // fallback if client doesn't send X-Author-Name header
   mcpApiKey?: string;
   transport: "http" | "stdio";
 }
