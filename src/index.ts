@@ -9,13 +9,20 @@ import { loadConfig } from "./config.js";
 const config = loadConfig();
 const client = new EtherpadClient(config.etherpadUrl, config.etherpadApiKey);
 
-// Verify Etherpad connectivity
-try {
-  await client.checkToken();
-  console.error("Connected to Etherpad at", config.etherpadUrl);
-} catch (err) {
-  console.error("Failed to connect to Etherpad:", err);
-  process.exit(1);
+// Wait for Etherpad to be ready
+for (let attempt = 1; ; attempt++) {
+  try {
+    await client.checkToken();
+    console.error("Connected to Etherpad at", config.etherpadUrl);
+    break;
+  } catch (err) {
+    if (attempt >= 30) {
+      console.error("Failed to connect to Etherpad after 30 attempts:", err);
+      process.exit(1);
+    }
+    console.error(`Waiting for Etherpad (attempt ${attempt}/30)...`);
+    await new Promise((r) => setTimeout(r, 2000));
+  }
 }
 
 // Parse CLI args for transport override
