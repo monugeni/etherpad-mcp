@@ -26,7 +26,7 @@ export function loadConfig(): Config {
   return {
     etherpadUrl: etherpadUrl.replace(/\/+$/, ""),
     etherpadApiKey,
-    port: parseInt(process.env.PORT || "3100", 10),
+    port: parseInt(process.env.PORT || "8209", 10),
     host: process.env.HOST || "0.0.0.0",
     mcpApiKey: process.env.MCP_API_KEY || undefined,
     transport,
