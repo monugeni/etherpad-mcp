@@ -2,7 +2,9 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { EtherpadClient } from "../etherpad-client.js";
 
-export function registerPadTools(server: McpServer, client: EtherpadClient) {
+export function registerPadTools(server: McpServer, client: EtherpadClient, publicUrl: string) {
+  const padUrl = (padId: string) => `${publicUrl}/p/${padId}`;
+
   server.tool(
     "create_pad",
     "Create a new Etherpad document with optional initial text",
@@ -10,7 +12,7 @@ export function registerPadTools(server: McpServer, client: EtherpadClient) {
     { destructiveHint: false, readOnlyHint: false },
     async ({ padId, text }) => {
       await client.createPad(padId, text);
-      return { content: [{ type: "text", text: `Pad "${padId}" created.` }] };
+      return { content: [{ type: "text", text: `Pad created: ${padUrl(padId)}` }] };
     }
   );
 
@@ -27,14 +29,16 @@ export function registerPadTools(server: McpServer, client: EtherpadClient) {
 
   server.tool(
     "list_all_pads",
-    "List all pads on the Etherpad instance",
+    "List all pads on the Etherpad instance. Each pad can be opened at the URL shown.",
     {},
     { readOnlyHint: true, destructiveHint: false },
     async () => {
       const result = await client.listAllPads();
-      return {
-        content: [{ type: "text", text: result.padIDs.length > 0 ? result.padIDs.join("\n") : "(no pads)" }],
-      };
+      if (result.padIDs.length === 0) {
+        return { content: [{ type: "text", text: "(no pads)" }] };
+      }
+      const lines = result.padIDs.map((id) => `${id} — ${padUrl(id)}`);
+      return { content: [{ type: "text", text: lines.join("\n") }] };
     }
   );
 }

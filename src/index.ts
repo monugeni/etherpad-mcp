@@ -33,7 +33,7 @@ const transportArg = process.argv.includes("--stdio")
     : config.transport;
 
 if (transportArg === "stdio") {
-  const server = createServer(client);
+  const server = createServer(client, config.etherpadPublicUrl);
   const transport = new StdioServerTransport();
   await server.connect(transport);
   console.error("Etherpad MCP server running on stdio");
@@ -74,7 +74,7 @@ if (transportArg === "stdio") {
       },
     });
 
-    const server = createServer(client);
+    const server = createServer(client, config.etherpadPublicUrl);
 
     transport.onclose = () => {
       const id = transport.sessionId;

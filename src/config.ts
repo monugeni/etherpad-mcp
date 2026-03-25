@@ -1,5 +1,6 @@
 export interface Config {
   etherpadUrl: string;
+  etherpadPublicUrl: string;
   etherpadApiKey: string;
   port: number;
   host: string;
@@ -30,8 +31,11 @@ export async function loadConfig(): Promise<Config> {
     throw new Error('TRANSPORT must be "http" or "stdio"');
   }
 
+  const etherpadPublicUrl = (process.env.ETHERPAD_PUBLIC_URL || etherpadUrl).replace(/\/+$/, "");
+
   return {
     etherpadUrl: etherpadUrl.replace(/\/+$/, ""),
+    etherpadPublicUrl,
     etherpadApiKey,
     port: parseInt(process.env.PORT || "8209", 10),
     host: process.env.HOST || "0.0.0.0",

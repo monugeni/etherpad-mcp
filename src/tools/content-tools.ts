@@ -2,7 +2,8 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { EtherpadClient } from "../etherpad-client.js";
 
-export function registerContentTools(server: McpServer, client: EtherpadClient) {
+export function registerContentTools(server: McpServer, client: EtherpadClient, publicUrl: string) {
+  const padUrl = (padId: string) => `${publicUrl}/p/${padId}`;
   server.tool(
     "get_text",
     "Read the plain text content of a pad. Returns the text and current revision number.",
@@ -14,7 +15,7 @@ export function registerContentTools(server: McpServer, client: EtherpadClient) 
         client.getRevisionsCount(padId),
       ]);
       return {
-        content: [{ type: "text", text: `[revision ${revs.revisions}]\n${text.text}` }],
+        content: [{ type: "text", text: `[revision ${revs.revisions}] ${padUrl(padId)}\n${text.text}` }],
       };
     }
   );
