@@ -58,8 +58,17 @@ export class EtherpadClient {
     return this.call("listAllPads");
   }
 
-  async getText(padId: string): Promise<{ text: string }> {
-    return this.call("getText", { padID: padId });
+  async getText(padId: string, rev?: number): Promise<{ text: string }> {
+    return this.call("getText", { padID: padId, ...(rev != null ? { rev } : {}) });
+  }
+
+  async getMarkdown(padId: string): Promise<string> {
+    const url = `${this.baseUrl}/p/${padId}/export/markdown`;
+    const res = await fetch(url);
+    if (!res.ok) {
+      throw new Error(`Etherpad export error ${res.status}: ${res.statusText}`);
+    }
+    return res.text();
   }
 
   async createAuthorIfNotExistsFor(

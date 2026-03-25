@@ -8,7 +8,7 @@ RUN npm run build
 
 FROM etherpad/etherpad:latest
 USER root
-RUN apk add --no-cache supervisor
+RUN apk add --no-cache supervisor abiword
 
 WORKDIR /opt/mcp
 COPY package.json package-lock.json ./

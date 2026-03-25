@@ -6,16 +6,19 @@ export function registerContentTools(server: McpServer, client: EtherpadClient, 
   const padUrl = (padId: string) => `${publicUrl}/p/${padId}`;
   server.tool(
     "get_text",
-    "Read the plain text content of a pad. Returns the text and current revision number.",
-    { padId: z.string().describe("Pad identifier") },
+    "Read the content of a pad. By default returns plain text. Set format to 'markdown' to get Markdown exported by the ep_markdown plugin (converts rich formatting to Markdown syntax). Returns the content and current revision number.",
+    {
+      padId: z.string().describe("Pad identifier"),
+      format: z.enum(["text", "markdown"]).default("text").describe("Output format: 'text' for plain text, 'markdown' for Markdown export"),
+    },
     { readOnlyHint: true, destructiveHint: false },
-    async ({ padId }) => {
-      const [text, revs] = await Promise.all([
-        client.getText(padId),
+    async ({ padId, format }) => {
+      const [content, revs] = await Promise.all([
+        format === "markdown" ? client.getMarkdown(padId) : client.getText(padId).then(r => r.text),
         client.getRevisionsCount(padId),
       ]);
       return {
-        content: [{ type: "text", text: `[revision ${revs.revisions}] ${padUrl(padId)}\n${text.text}` }],
+        content: [{ type: "text", text: `[revision ${revs.revisions}] ${padUrl(padId)}\n${content}` }],
       };
     }
   );
@@ -96,14 +99,29 @@ export function registerContentTools(server: McpServer, client: EtherpadClient, 
       if (revs.revisions <= sinceRevision) {
         return { content: [{ type: "text", text: "No changes since revision " + sinceRevision + "." }] };
       }
-      const diff = await client.createDiffHTML(padId, sinceRevision, revs.revisions);
-      const authors = diff.authors.length > 0 ? diff.authors.join(", ") : "unknown";
-      return {
-        content: [{
-          type: "text",
-          text: `Changes from revision ${sinceRevision} → ${revs.revisions} (by ${authors}):\n${diff.html}`,
-        }],
-      };
+      // Try createDiffHTML first; it can be unreliable in some Etherpad versions
+      try {
+        const diff = await client.createDiffHTML(padId, sinceRevision, revs.revisions);
+        const authors = diff.authors.length > 0 ? diff.authors.join(", ") : "unknown";
+        return {
+          content: [{
+            type: "text",
+            text: `Changes from revision ${sinceRevision} → ${revs.revisions} (by ${authors}):\n${diff.html}`,
+          }],
+        };
+      } catch {
+        // Fallback: return text at both revisions for manual comparison
+        const [oldText, newText] = await Promise.all([
+          client.getText(padId, sinceRevision),
+          client.getText(padId),
+        ]);
+        return {
+          content: [{
+            type: "text",
+            text: `Diff unavailable (createDiffHTML failed for revision ${sinceRevision} → ${revs.revisions}). Returning both versions for comparison.\n\n--- Revision ${sinceRevision} ---\n${oldText.text}\n\n--- Revision ${revs.revisions} (current) ---\n${newText.text}`,
+          }],
+        };
+      }
     }
   );
 }
