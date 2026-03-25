@@ -8,7 +8,9 @@ RUN npm run build
 
 FROM etherpad/etherpad:latest
 USER root
-RUN apk add --no-cache supervisor abiword
+RUN apk add --no-cache supervisor pandoc py3-weasyprint ttf-freefont
+COPY abiword-pandoc.sh /usr/local/bin/abiword
+RUN chmod +x /usr/local/bin/abiword
 
 WORKDIR /opt/mcp
 COPY package.json package-lock.json ./

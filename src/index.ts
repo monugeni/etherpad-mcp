@@ -1,10 +1,13 @@
 import express from "express";
 import { randomUUID } from "node:crypto";
+import { existsSync } from "node:fs";
+import path from "node:path";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { EtherpadClient } from "./etherpad-client.js";
 import { createServer } from "./server.js";
 import { loadConfig } from "./config.js";
+import { EXPORT_DIR } from "./tools/export-tools.js";
 
 const config = await loadConfig();
 const client = new EtherpadClient(config.etherpadUrl, config.etherpadApiKey);
@@ -32,13 +35,17 @@ const transportArg = process.argv.includes("--stdio")
     ? "http"
     : config.transport;
 
+// Derive MCP public URL for download links
+const epUrl = new URL(config.etherpadPublicUrl);
+const mcpPublicUrl = `${epUrl.protocol}//${epUrl.hostname}:${config.port}`;
+
 if (transportArg === "stdio") {
   const authorName = config.authorName;
   const author = await client.createAuthorIfNotExistsFor(`mcp-${authorName}`, authorName);
   console.error(`Registered as author "${authorName}" (${author.authorID})`);
   const server = createServer(client, config.etherpadPublicUrl, author.authorID);
-  const transport = new StdioServerTransport();
-  await server.connect(transport);
+  const stdioTransport = new StdioServerTransport();
+  await server.connect(stdioTransport);
   console.error("Etherpad MCP server running on stdio");
 } else {
   const app = express();
@@ -82,7 +89,7 @@ if (transportArg === "stdio") {
       },
     });
 
-    const server = createServer(client, config.etherpadPublicUrl, author.authorID);
+    const server = createServer(client, config.etherpadPublicUrl, author.authorID, mcpPublicUrl);
 
     transport.onclose = () => {
       const id = transport.sessionId;
@@ -112,6 +119,17 @@ if (transportArg === "stdio") {
     }
     const session = sessions.get(sessionId)!;
     await session.transport.handleRequest(req, res);
+  });
+
+  // Serve exported document downloads (no auth required)
+  app.get("/downloads/:filename", (req, res) => {
+    const filename = path.basename(req.params.filename);
+    const filePath = path.join(EXPORT_DIR, filename);
+    if (!existsSync(filePath)) {
+      res.status(404).json({ error: "File not found or expired" });
+      return;
+    }
+    res.download(filePath, filename);
   });
 
   app.get("/health", async (_req, res) => {

@@ -16,7 +16,7 @@ services:
       DB_FILENAME: var/dirty.db
       DEFAULT_PAD_TEXT: " "
       TRUST_PROXY: "true"
-      ABIWORD: /usr/bin/abiword
+      ABIWORD: /usr/local/bin/abiword
     ports:
       - "8208:9001"
       - "8209:8209"
