@@ -1,21 +1,22 @@
-FROM etherpad/etherpad:latest
-
-USER root
-
-RUN apk add --no-cache supervisor
-
-# Copy and build MCP server
+FROM node:22-alpine AS builder
 WORKDIR /opt/mcp
 COPY package.json package-lock.json ./
 RUN npm install
 COPY tsconfig.json ./
 COPY src/ src/
-RUN npm run build && rm -rf node_modules && npm install --omit=dev
+RUN npm run build
 
-# Supervisor config to run both processes
+FROM etherpad/etherpad:latest
+USER root
+RUN apk add --no-cache supervisor
+
+WORKDIR /opt/mcp
+COPY package.json package-lock.json ./
+RUN npm install --omit=dev
+COPY --from=builder /opt/mcp/dist dist/
+
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 USER etherpad
 WORKDIR /opt/etherpad-lite
-
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
