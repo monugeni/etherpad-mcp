@@ -2,8 +2,7 @@ FROM etherpad/etherpad:latest
 
 USER root
 
-# Install build tools for npm
-RUN apt-get update && apt-get install -y --no-install-recommends supervisor && rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache supervisor
 
 # Copy and build MCP server
 WORKDIR /opt/mcp
