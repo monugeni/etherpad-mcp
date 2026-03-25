@@ -22,7 +22,7 @@ export function registerContentTools(server: McpServer, client: EtherpadClient, 
 
   server.tool(
     "edit_text",
-    "Make a surgical edit to a pad by replacing a specific section of text. Finds the exact old_text in the pad and replaces it with new_text. Only the changed portion appears as an edit to other users, like a human typing. Use this instead of set_text for modifications.",
+    "Make a surgical edit to a pad by replacing a specific section of text. Finds the exact old_text in the pad and replaces it with new_text. Only the changed portion appears as an edit to other users, like a human typing. Use this instead of set_text for modifications. Maintain Markdown formatting.",
     {
       padId: z.string().describe("Pad identifier"),
       old_text: z.string().describe("Exact text to find in the pad (must match precisely)"),
@@ -55,10 +55,10 @@ export function registerContentTools(server: McpServer, client: EtherpadClient, 
 
   server.tool(
     "set_text",
-    "Replace the entire content of a pad. Only use this for writing a completely new document, not for edits — use edit_text for modifications.",
+    "Replace the entire content of a pad. Only use this for writing a completely new document, not for edits — use edit_text for modifications. Always write content in Markdown format.",
     {
       padId: z.string().describe("Pad identifier"),
-      text: z.string().describe("New text content"),
+      text: z.string().describe("New text content in Markdown format"),
     },
     { readOnlyHint: false, destructiveHint: false, idempotentHint: true },
     async ({ padId, text }) => {
@@ -70,10 +70,10 @@ export function registerContentTools(server: McpServer, client: EtherpadClient, 
 
   server.tool(
     "append_text",
-    "Append text to the end of a pad",
+    "Append text to the end of a pad. Use Markdown formatting.",
     {
       padId: z.string().describe("Pad identifier"),
-      text: z.string().describe("Text to append"),
+      text: z.string().describe("Text to append in Markdown format"),
     },
     { readOnlyHint: false, destructiveHint: false },
     async ({ padId, text }) => {
