@@ -7,15 +7,22 @@ export interface Config {
   transport: "http" | "stdio";
 }
 
-export function loadConfig(): Config {
+export async function loadConfig(): Promise<Config> {
+  const { readFileSync } = await import("node:fs");
+
   const etherpadUrl = process.env.ETHERPAD_URL;
-  const etherpadApiKey = process.env.ETHERPAD_API_KEY;
+  let etherpadApiKey = process.env.ETHERPAD_API_KEY;
+
+  // Support reading API key from a file (for Docker where Etherpad generates its own key)
+  if (!etherpadApiKey && process.env.ETHERPAD_API_KEY_FILE) {
+    etherpadApiKey = readFileSync(process.env.ETHERPAD_API_KEY_FILE, "utf-8").trim();
+  }
 
   if (!etherpadUrl) {
     throw new Error("ETHERPAD_URL environment variable is required");
   }
   if (!etherpadApiKey) {
-    throw new Error("ETHERPAD_API_KEY environment variable is required");
+    throw new Error("ETHERPAD_API_KEY or ETHERPAD_API_KEY_FILE environment variable is required");
   }
 
   const transport = process.env.TRANSPORT ?? "http";

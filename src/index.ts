@@ -6,7 +6,7 @@ import { EtherpadClient } from "./etherpad-client.js";
 import { createServer } from "./server.js";
 import { loadConfig } from "./config.js";
 
-const config = loadConfig();
+const config = await loadConfig();
 const client = new EtherpadClient(config.etherpadUrl, config.etherpadApiKey);
 
 // Wait for Etherpad to be ready
