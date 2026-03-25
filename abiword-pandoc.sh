@@ -12,8 +12,15 @@ for arg in "$@"; do
 done
 
 OUTPUT="${INPUT%.*}.${FORMAT}"
-if [ "$FORMAT" = "pdf" ]; then
-  exec pandoc "$INPUT" -o "$OUTPUT" --pdf-engine=weasyprint
+
+# Map abiword formats to pandoc equivalents
+PANDOC_FMT="$FORMAT"
+case "$FORMAT" in
+  doc) PANDOC_FMT="docx" ;;
+esac
+
+if [ "$PANDOC_FMT" = "pdf" ]; then
+  exec pandoc "$INPUT" -t html -o "$OUTPUT" --pdf-engine=weasyprint
 else
-  exec pandoc "$INPUT" -o "$OUTPUT"
+  exec pandoc "$INPUT" -t "$PANDOC_FMT" -o "$OUTPUT"
 fi
