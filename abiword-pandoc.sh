@@ -1,26 +1,52 @@
 #!/bin/sh
 # Drop-in replacement for abiword using pandoc.
-# Etherpad calls: abiword --to=<format> <input.html>
-# Output: same basename with new extension.
-FORMAT=""
-INPUT=""
-for arg in "$@"; do
-  case "$arg" in
-    --to=*) FORMAT="${arg#--to=}" ;;
-    *) INPUT="$arg" ;;
+#
+# Unix mode:    abiword --plugin AbiCommand  (interactive, stdin/stdout)
+#               stdin:  convert <srcFile> <destFile> <type>
+#               stdout: OK\nAbiWord:>
+#
+# Windows mode: abiword --to=<destFile> <srcFile>  (one-shot)
+
+pandoc_fmt() {
+  case "$1" in
+    doc) echo "docx" ;;
+    *) echo "$1" ;;
   esac
-done
+}
 
-OUTPUT="${INPUT%.*}.${FORMAT}"
+do_convert() {
+  _src="$1"; _dest="$2"; _type="$3"
+  _fmt=$(pandoc_fmt "$_type")
+  if [ "$_fmt" = "pdf" ]; then
+    pandoc "$_src" -o "$_dest" --pdf-engine=weasyprint 2>&1
+  else
+    pandoc "$_src" -t "$_fmt" -o "$_dest" 2>&1
+  fi
+}
 
-# Map abiword formats to pandoc equivalents
-PANDOC_FMT="$FORMAT"
-case "$FORMAT" in
-  doc) PANDOC_FMT="docx" ;;
-esac
-
-if [ "$PANDOC_FMT" = "pdf" ]; then
-  exec pandoc "$INPUT" -t html -o "$OUTPUT" --pdf-engine=weasyprint
+if [ "$1" = "--plugin" ] && [ "$2" = "AbiCommand" ]; then
+  # Interactive mode (Unix) — emulate AbiCommand plugin protocol
+  printf "AbiWord:>"
+  while IFS= read -r line; do
+    # Parse: convert <srcFile> <destFile> <type>
+    set -- $line
+    CMD="$1"; SRC="$2"; DEST="$3"; TYPE="$4"
+    if [ "$CMD" = "convert" ] && [ -n "$SRC" ] && [ -n "$DEST" ]; then
+      if do_convert "$SRC" "$DEST" "$TYPE"; then
+        printf "OK\n"
+      fi
+    fi
+    printf "AbiWord:>"
+  done
 else
-  exec pandoc "$INPUT" -t "$PANDOC_FMT" -o "$OUTPUT"
+  # One-shot mode (Windows): --to=<destFile> <srcFile>
+  DEST=""; SRC=""
+  for arg in "$@"; do
+    case "$arg" in
+      --to=*) DEST="${arg#--to=}" ;;
+      *) SRC="$arg" ;;
+    esac
+  done
+  EXT="${DEST##*.}"
+  do_convert "$SRC" "$DEST" "$EXT"
 fi
